@@ -181,16 +181,16 @@ class AvlTree<T extends Comparable<? super T>> {
    * @param k2 Root of tree we are rotating
    * @return New root
    */
-  protected AvlNode<T> rotateWithLeftChild (AvlNode<T> k2){
-    AvlNode<T> k1 = k2.left;
-    
-    k2.left = k1.right;
-    k1.right = k2;
-    
-    k2.height = max (height (k2.left), height (k2.right)) + 1;
-    k1.height = max (height (k1.left), k2.height) + 1;
-    
-    return (k1);
+  private AvlNode<T> rotateWithLeftChild (AvlNode<T> father){
+	  AvlNode<T> lChild = father.leftChild;
+
+	  father.leftChild = lChild.rightChild;
+	  lChild.rightChild = father;
+
+	  father.height = Math.max (getNodeHeight (father.leftChild), getNodeHeight (father.rightChild)) + 1;
+	  lChild.height = Math.max (getNodeHeight (lChild.leftChild), getNodeHeight(father)) + 1;
+
+	  return (lChild);
   }
   
   /**
@@ -202,9 +202,9 @@ class AvlTree<T extends Comparable<? super T>> {
    * @param k3 Root of tree we are rotating
    * @return New root
    */
-  protected AvlNode<T> doubleWithLeftChild (AvlNode<T> k3){
-    k3.left = rotateWithRightChild (k3.left);
-    return rotateWithLeftChild (k3);
+  private AvlNode<T> rotateWithRightThenLeft (AvlNode<T> node){
+	  node.leftChild = rotateWithRight (node.leftChild);
+	  return rotateWithLeftChild (node);
   }
   
   /**
@@ -215,16 +215,16 @@ class AvlTree<T extends Comparable<? super T>> {
    * @param k1 Root of tree we are rotating.
    * @return New root
    */
-  protected AvlNode<T> rotateWithRightChild (AvlNode<T> k1){
-    AvlNode<T> k2 = k1.right;
-    
-    k1.right = k2.left;
-    k2.left = k1;
-    
-    k1.height = max (height (k1.left), height (k1.right)) + 1;
-    k2.height = max (height (k2.right), k1.height) + 1;
-    
-    return (k2);
+  private AvlNode<T> rotateWithRight (AvlNode<T> father){
+	  AvlNode<T> rChild = father.rightChild;
+
+	  father.rightChild = rChild.leftChild;
+	  rChild.leftChild = father;
+
+	  father.height = Math.max (getNodeHeight (father.leftChild), getNodeHeight (father.rightChild)) + 1;
+	  rChild.height = Math.max (getNodeHeight (rChild.rightChild), getNodeHeight(father)) + 1;
+
+	  return (rChild);
   }
 
   /**
@@ -236,9 +236,9 @@ class AvlTree<T extends Comparable<? super T>> {
    * @param k1 Root of tree we are rotating
    * @return New root
    */
-  protected AvlNode<T> doubleWithRightChild (AvlNode<T> k1){
-    k1.right = rotateWithLeftChild (k1.right);
-    return rotateWithRightChild (k1);
+  private AvlNode<T> rotateWithLeftThenRight (AvlNode<T> node){
+	  node.rightChild = rotateWithLeftChild (node.rightChild);
+	  return rotateWithRight (node);
   }
 
 
@@ -381,68 +381,54 @@ class AvlTree<T extends Comparable<? super T>> {
       root = remove(x, root);
   }
 
-  public AvlNode<T> remove(T x, AvlNode<T> t) {
-      if (t==null)    {
-          System.out.println("Sorry but you're mistaken, " + t + " doesn't exist in this tree :)\n");
-          return null;
-      }
-      System.out.println("Remove starts... " + t.element + " and " + x);
-  
-      if (x.compareTo(t.element) < 0 ) {
-          t.left = remove(x,t.left);
-          int l = t.left != null ? t.left.height : 0;
-  
-          if((t.right != null) && (t.right.height - l >= 2)) {
-              int rightHeight = t.right.right != null ? t.right.right.height : 0;
-              int leftHeight = t.right.left != null ? t.right.left.height : 0;
-  
-              if(rightHeight >= leftHeight)
-                  t = rotateWithLeftChild(t);            
-              else
-                  t = doubleWithRightChild(t);
-          }
-      }
-      else if (x.compareTo(t.element) > 0) {
-          t.right = remove(x,t.right);
-          int r = t.right != null ? t.right.height : 0;
-          if((t.left != null) && (t.left.height - r >= 2)) {
-              int leftHeight = t.left.left != null ? t.left.left.height : 0;
-              int rightHeight = t.left.right != null ? t.left.right.height : 0;
-              if(leftHeight >= rightHeight)
-                  t = rotateWithRightChild(t);               
-              else
-                  t = doubleWithLeftChild(t);
-          }
-      }
-      /*
-         Here, we have ended up when we are node which shall be removed. 
-         Check if there is a left-hand node, if so pick out the largest element out, and move down to the root.
-       */
-      else if(t.left != null) {
-          t.element = findMax(t.left).element;
-          remove(t.element, t.left);
-       
-          if((t.right != null) && (t.right.height - t.left.height >= 2)) {
-              int rightHeight = t.right.right != null ? t.right.right.height : 0;
-              int leftHeight = t.right.left != null ? t.right.left.height : 0;
-       
-              if(rightHeight >= leftHeight)
-                  t = rotateWithLeftChild(t);            
-              else
-                  t = doubleWithRightChild(t);
-          }
-      }
-       
-      else
-          t = (t.left != null) ? t.left : t.right;
-       
-      if(t != null) {
-          int leftHeight = t.left != null ? t.left.height : 0;
-          int rightHeight = t.right!= null ? t.right.height : 0;
-          t.height = Math.max(leftHeight,rightHeight) + 1;
-      }
-      return t;
-  } //End of remove...
+  public AvlNode<T> remove(T w, AvlNode<T> z) {
+	  if (z == null)
+		{
+			System.out.println("No such value found.");
+			return z;
+		}
+		else if(w.compareTo(z.value) < 0) // search key on the left subtree
+			z.leftChild = remove(w, z.leftChild);
+		else if(w.compareTo(z.value) > 0) // search key on the right subtree
+			z.rightChild = remove(w, z.rightChild);
+
+		else { // the key is found!
+
+			// delete node
+			if (z.rightChild == null || z.leftChild == null) {
+				z = z.rightChild == null ? z.leftChild : z.rightChild;
+			}
+			else
+			{
+				z.value = minValue(z.rightChild).value;
+				z.rightChild = remove(z.value, z.rightChild);
+			}
+
+		}
+
+		if (z == null)
+			return null;
+
+		z.height = Math.max(getNodeHeight(z.leftChild), getNodeHeight(z.rightChild)) + 1;
+		if (getBalance(z) > 1)
+		{
+			if (getBalance(z.leftChild) >= 0)
+				return rotateWithLeftChild(z); // left left case
+			else // if (getBalance(z.leftChild) < 0)
+				return rotateWithRightThenLeft(z); // left right case
+		}
+
+		else if(getBalance(z) < -1)
+		{
+			if (getBalance(z.rightChild) <= 0)
+				return rotateWithRight(z); // right right case
+			else // if (getBalance(z.rightChild) > 0)
+				return rotateWithLeftThenRight(z); // right left case
+		}
+
+
+		return z;
+  }
 
   /**
    * Search for an element within the tree. 
